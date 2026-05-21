@@ -1,27 +1,36 @@
+
 ### INTRODUCTION #####
 
-# Welcome. For the description of the project please visit: https://github.com/diekei/2025_ENS_diekei_dicliptera_speciation
+# Welcome. For the description of the project please visit: https://github.com/diekei/2026_EE_diekei_dicliptera_speciation
 # Article is available at: 
 
 
 ## LIBRARY ####
 
-library(ggplot2)
-library(png)
-library(grid)
-library(gghighlight)
-library(scales)
-library(ggpubr)
-library(ggnewscale)
-library(Hmisc)
 library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+library(gghighlight)
+library(ggnewscale)
 library(ggside)
+library(grid)
+library(png)
+library(scales)
+library(Hmisc)
 library(MASS)
 
-## HOST PREFERENCE ####
 
-dic_m <- readPNG("dic_m.png", native = FALSE)
-dic_d <- readPNG("dic_d.png", native = FALSE)
+## AESTHETICS ####
+
+dic_m <- readPNG("icon/dic_m.png", native = FALSE)
+dic_d <- readPNG("icon/dic_d.png", native = FALSE)
+dic_mm <- readPNG("dic_mm_l.png", native = FALSE)
+dic_dd <- readPNG("dic_dd_l.png", native = FALSE)
+dic_md <- readPNG("dic_md_l.png", native = FALSE)
+dic_dm <- readPNG("dic_dm_l.png", native = FALSE)
+
+
+## HOST PREFERENCE ####
 
 hp.pop <- c("BDG (6)", "PDL (17)", "TBR (14)", "PAT (42)", "RAN (48)")
 hp.pref <- c("Mikania", "Mikania", "Mikania", "Dicliptera", "Dicliptera")
@@ -34,7 +43,6 @@ hp$hp.pop <- factor(hp$hp.pop,
 hp.labs <- c("BDG (6)" = "BDG [(6)]", "PDL (17)" = "PDL [(17)]", "TBR (14)" = "TBR [(14)]", 
              "PAT (42)" = "PAT [(42)]", "RAN (48)" = "RAN [(48)]")
 
-
 ggplot(hp, aes(fill = hp.pref, y = hp.prop, x = hp.pop)) + 
   geom_bar(stat = "identity", width = 0.7) + 
   scale_fill_manual(values = c("#ABD1DC", "#BAC94A")) + 
@@ -43,34 +51,35 @@ ggplot(hp, aes(fill = hp.pref, y = hp.prop, x = hp.pop)) +
   xlab("\nPopulation") + 
   ylab(expression(paste("Preference for ", italic("Mikania")))) +
   guides(fill = guide_legend(title = "pref")) +
-  scale_y_continuous(limits =  c(-1,1.07)) + 
+  scale_y_continuous(
+    limits = c(-1, 1.07),
+    breaks = seq(-1, 1, 0.5),
+    labels = function(x) gsub("\\.0$", "", x)
+  ) +
   theme_bw() + 
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1), 
-        legend.position = "none") + 
+        legend.position = "none",
+        panel.grid = element_blank()) + 
   annotate("text", x = c(1,2,3,4,5), y = c(0.95, 0.95, 0.807, -0.869, -0.773), 
            label = c("a", "a", "a", "b", "b"), size = 2.5, color = "white") + 
   annotation_custom(rasterGrob(dic_m), xmin = "PAT (42)", xmax = "RAN (48)", ymin = 0.75, ymax = 1) + 
   annotation_custom(rasterGrob(dic_d), xmin = "BDG (6)", xmax = "PDL (17)", ymin = -1, ymax = -0.75)
 
-
-ggsave(filename = "Plots/hp_diekei_n2.png", width = 2.5, height = 5, device='png', dpi=1200)
+ggsave(filename = "figures/diekei_dic_hp.png", width = 2.5, height = 5, device='png', dpi=1200)
+ggsave(filename = "figures/diekei_dic_hp.pdf", width = 2.5, height = 5, device='pdf', dpi=1200)
 
 
 ## NON CHOICE MATING ####
 
-ncm2 <- read.csv('data/2024_EE_vis_nonchoice_mating.csv')
+#glm_ncm2.csv
+ncm2 <- read.csv('data/01_2026_EE_vis_nonchoice_mating.csv')
 ncm2
 attach(ncm2)
 
 ncm2$fem <- factor(ncm2$fem, levels = c("mrace", "drace"))
 ncm2$mle <- factor(ncm2$mle, levels = c("mrace", "drace"))
 ncm2$pair <- factor(ncm2$pair, levels = c("mm", "md", "dm", "dd"))
-
-dic_mm <- readPNG("dic_mm_l.png", native = FALSE)
-dic_dd <- readPNG("dic_dd_l.png", native = FALSE)
-dic_md <- readPNG("dic_md_l.png", native = FALSE)
-dic_dm <- readPNG("dic_dm_l.png", native = FALSE)
 
 ncm.labs <- data.frame(fem = c("mrace", "mrace", "mrace", "mrace", 
                                "drace", "drace", "drace", "drace"), 
@@ -90,6 +99,15 @@ mle.labs <- c(
 ncm2 <- ncm2 %>%
   mutate(pair_exp = interaction(pair, exp, sep = "-"))
 
+ncm2 |>
+  dplyr::group_by(fem, mle, pair, pair_exp) |>
+  dplyr::summarise(
+    mean = mean(pro, na.rm = TRUE),
+    sem = sd(pro, na.rm = TRUE) / sqrt(sum(!is.na(pro))),
+    n = sum(!is.na(pro)),
+    .groups = "drop"
+  )
+
 ncm.plot <- ggplot(ncm2, aes(x = mle, y = pro)) + 
   facet_wrap(~fem, labeller = labeller(fem = as_labeller(fem.labs))) + 
   stat_summary(aes(color = pair, shape = pair_exp, fill = pair, size = 2), 
@@ -102,14 +120,15 @@ ncm.plot <- ggplot(ncm2, aes(x = mle, y = pro)) +
                                 "dm-att" = 22, "dm-suc" = 0,
                                 "dd-att" = 24, "dd-suc" = 2)) +
   xlab("\nMating pair") + 
-  ylab("Relative proportion\n") + 
+  ylab("Proportion of trials (non-choice mating test)\n") + 
   scale_x_discrete(labels = (text = mle.labs)) + 
   scale_y_continuous(limits =  c(-0.35,1.25), breaks = seq(0,1,by=0.25), labels = c("0", "0.25", "0.5", "0.75", "1")) +
   theme_bw() + 
   theme(plot.title = element_text(hjust = 0.5), 
         legend.position = "none",
         strip.background = element_blank(),
-        strip.text = element_text(face = "italic")) + 
+        strip.text = element_text(face = "italic"),
+        panel.grid = element_blank()) + 
   geom_text(x =c(0.9,1.125,1.9,2.125,0.88,1.125,1.875,2.125), 
             y = c(0.85,0.85,-0.05,-0.05,0.25,0.25,0.48,0.48), 
             aes(label = label), data = ncm.labs, size = 2.5, 
@@ -135,15 +154,27 @@ ncm.an6 <- ncm.an(rasterGrob(dic_d, interpolate=TRUE), xmin=1.5, xmax=2.5, ymin=
 
 ncm.plot + ncm.an1 + ncm.an2 + ncm.an3 + ncm.an4 + ncm.an5 + ncm.an6
 
-png("Plots/ncm_diekei_n2.png", 
+png("figures/diekei_dic_ncm.png", 
     width = 4, height = 5, units = "in", res = 1200)
 ncm.plot + ncm.an1 + ncm.an2 + ncm.an3 + ncm.an4 + ncm.an5 + ncm.an6
+dev.off()
+
+cairo_pdf(
+  filename = "figures/diekei_dic_ncm.pdf",
+  width = 4,
+  height = 5,
+  family = "Arial Unicode MS"
+)
+
+ncm.plot + ncm.an1 + ncm.an2 + ncm.an3 + ncm.an4 + ncm.an5 + ncm.an6
+
 dev.off()
 
 
 ## EGG ####
 
-egg2 <- read.csv('data/2024_EE_vis_egg.csv', na.strings = "na")
+# glm_egg2.csv
+egg2 <- read.csv('data/02_2026_EE_vis_egg.csv', na.strings = "na")
 egg2
 attach(egg2)
 
@@ -155,40 +186,24 @@ pair.labs <- as_labeller(c(mm = "MM [(18/280)]",
                            dm = "DM [(18/58)]"), 
                          default = label_parsed)
 
-'
-pair.labs <- as_labeller(c(
-  mm = expression(italic("M") ~ x ~ italic("M") ~ " [(18/280)]"),
-  md = expression(italic("M") ~ x ~ italic("D") ~ " [(12/135)]"),
-  dd = expression(italic("D") ~ x ~ italic("D") ~ " [(16/64)]"),
-  dm = expression(italic("D") ~ x ~ italic("M") ~ " [(18/58)]")
-), default = label_parsed)
-'
-
-egg.labs <- data.frame(pair = c("mm", "mm", "mm", "md", "md", "md", "dd", "dd", "dd", "dm", "dm", "dm"), 
-                       label = c("MM: 18(20)", "eb: 15.77%+-%0.37 ^a", "hr: 0.434%+-%0.021 ^a", 
-                                 "MD: 12(135)","eb: 15.91%+-%0.59 ^a", "hr: 0.430%+-%0.028 ^a", 
-                                 "DD: 16(64)","eb: 10.41%+-%0.53 ^b", "hr: 0.311%+-%0.044 ^a", 
-                                 "DM: 18(58)","eb: 9.64%+-%0.59 ^b", "hr: 0.104%+-%0.025 ^b"))
-
 egg.labs <- data.frame(
   pair = c("mm", "mm", "mm", "md", "md", "md", "dd", "dd", "dd", "dm", "dm", "dm"),
   label = c(
     "italic('M') ~ x ~ italic('M') ~ ': 18(20)'", 
-    "eb: 15.77%+-%0.37 ^a", 
-    "hr: 0.434%+-%0.366 ^a",
+    "eb: '15.77'%+-%'0.37' ^a", 
+    "hr: '0.434'%+-%'0.366' ^a",
     "italic('M') ~ x ~ italic('D') ~ ': 12(135)'",
-    "eb: 15.91%+-%0.59 ^a", 
-    "hr: 0.430%+-%0.471 ^a",
+    "eb: '15.91'%+-%'0.59' ^a", 
+    "hr: '0.430'%+-%'0.471' ^a",
     "italic('D') ~ x ~ italic('D') ~ ': 16(64)'",
-    "eb: 10.41%+-%0.53 ^b", 
-    "hr: 0.311%+-%0.517 ^a",
+    "eb: '10.41'%+-%'0.53' ^b", 
+    "hr: '0.311'%+-%'0.517' ^a",
     "italic('D') ~ x ~ italic('M') ~ ': 18(58)'",
-    "eb: 9.64%+-%0.59 ^b", 
-    "hr: 0.104%+-%0.338 ^b"
+    "eb: '9.64'%+-%'0.59' ^b", 
+    "hr: '0.104'%+-%'0.338' ^b"
   ),
   stringsAsFactors = FALSE
 )
-
 
 egg.labs$pair <- factor(egg.labs$pair, levels = c("mm", "md", "dd", "dm"))
 
@@ -217,9 +232,11 @@ egg.plot <- ggplot(egg2, aes(x = prod, y = htc)) +
   geom_hline(data = egg2_summary, aes(yintercept = mean_htc, color = pair), linetype = "dashed", size = 0.4) +
   geom_vline(data = egg2_summary, aes(xintercept = mean_prod, color = pair), linetype = "dashed", size = 0.4) +
   facet_wrap(~pair, labeller = labeller(pair = pair.labs)) +
-  gghighlight(unhighlighted_colour = "grey92") +
+  #gghighlight(unhighlighted_colour = "grey92") +
   #geom_line(aes(color = pair), stat = "smooth", method = lm, alpha = 0.5, size = 2) + 
   #geom_smooth(aes(fill = pair), method = lm, color = NA, alpha = 0.5) +
+  scale_y_continuous(limits = c(0, max(egg2$htc, na.rm = TRUE)), expand = expansion(mult = c(0.08, 0.07), add = c(0, 0)), breaks = seq(0, 20, by = 10)) + 
+  scale_x_continuous(limits = c(0, max(egg2$prod, na.rm = TRUE)), expand = expansion(mult = c(0, 0.05), add = c(0, 0))) + 
   scale_color_manual(values = c("#BAC94A", "#5D6E1E", "#ABD1DC", "#3B5284")) + 
   scale_fill_manual(values = c("#BAC94A", "#5D6E1E", "#ABD1DC", "#3B5284")) + 
   scale_shape_manual(values = c(21,25,24,22)) +
@@ -227,9 +244,10 @@ egg.plot <- ggplot(egg2, aes(x = prod, y = htc)) +
   ylab("Eggs hatched (per batch)\n") + 
   theme_bw() + 
   theme(plot.title = element_text(hjust = 0.5), 
-        legend.position = "none",
+        #legend.position = "none",
         strip.background = element_rect(fill="white"), 
-        strip.text = element_blank()) + 
+        strip.text = element_blank(),
+        panel.grid = element_blank()) + 
   geom_text(x =c(21,21,21,21,21,21,21,21,21,21,21,21), 
             y = c(25,23,21,25,23,21,25,23,21,25,23,21), 
             aes(label = label), data = egg.labs, size = 2, hjust = 0, 
@@ -237,6 +255,49 @@ egg.plot <- ggplot(egg2, aes(x = prod, y = htc)) +
                       "black","black","black",
                       "black","black","black",
                       "black","black","black"), parse = TRUE)
+
+egg.plot <- ggplot(egg2, aes(x = prod, y = htc)) + 
+  geom_point(
+    aes(shape = pair, color = pair, size = value),
+    alpha = 0.5,
+    position = position_jitter(width = 0.4, height = 0.4, seed = 1830)
+  ) + 
+  geom_point(
+    data = egg2_summary,
+    aes(x = mean_prod, y = mean_htc, color = pair, shape = pair, fill = pair),
+    size = 2, color = "black"
+  ) +
+  geom_hline(data = egg2_summary, aes(yintercept = mean_htc, color = pair), linetype = "dashed", size = 0.4) +
+  geom_vline(data = egg2_summary, aes(xintercept = mean_prod, color = pair), linetype = "dashed", size = 0.4) +
+  facet_wrap(~pair, labeller = labeller(pair = pair.labs)) +
+  scale_y_continuous(limits = c(0, max(egg2$htc, na.rm = TRUE)), 
+                     expand = expansion(mult = c(0.08, 0.07), add = c(0, 0)), 
+                     breaks = seq(0, 20, by = 10)) + 
+  scale_x_continuous(limits = c(0, max(egg2$prod, na.rm = TRUE)), 
+                     expand = expansion(mult = c(0, 0.05), add = c(0, 0))) + 
+  scale_size_continuous(name = "n. obs.") +
+  scale_color_manual(values = c("#BAC94A", "#5D6E1E", "#ABD1DC", "#3B5284"), guide = "none") + 
+  scale_fill_manual(values = c("#BAC94A", "#5D6E1E", "#ABD1DC", "#3B5284"), guide = "none") + 
+  scale_shape_manual(values = c(21,25,24,22)) +
+  xlab("\nEggs produced (per batch)") + 
+  ylab("Eggs hatched (per batch)\n") + 
+  theme_bw() + 
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.background = element_rect(fill = "white"), 
+    strip.text = element_blank(),
+    panel.grid = element_blank()
+  ) + 
+  geom_text(
+    x = c(21,21,21,21,21,21,21,21,21,21,21,21), 
+    y = c(25,23,21,25,23,21,25,23,21,25,23,21), 
+    aes(label = label), data = egg.labs, size = 2, hjust = 0, 
+    color = "black", parse = TRUE
+  ) +
+  guides(
+    shape = "none",
+    size = guide_legend(order = 2)
+  )
 
 egg.plot
 
@@ -256,13 +317,13 @@ egg.an4 <- egg.an(rasterGrob(dic_dm, interpolate=TRUE), xmin=0, xmax=10, ymin=20
 
 egg.plot + egg.an1 + egg.an2 + egg.an3 + egg.an4
 
-ggsave(filename = "Plots/egg_diekei_n3.png", width = 4, height = 3.7, device='png', dpi=1200)
-
+ggsave(filename = "figures/diekei_dic_egg.png", width = 5, height = 3.7, device='png', dpi=1200)
+ggsave(filename = "figures/diekei_dic_egg.pdf", width = 5, height = 3.7, device='pdf', dpi=1200)
 
 
 ## LARVAL PERFORMANCE ####
 
-lp2 <- read.csv('data/2024_EE_vis_larval_performance.csv')
+lp2 <- read.csv('data/03_2026_EE_vis_larval_performance.csv')
 
 lp2$pair <- factor(lp2$pair, levels = c("mm", "md", "dd", "dm"))
 lp2$stg <- factor(lp2$stg, levels = c("Larval acceptance", "Survival to the second instar", "Reaching adulthood"))
@@ -279,50 +340,80 @@ lp2_summary <- lp2 %>%
 
 lp2_summary$pair <- factor(lp2_summary$pair, levels = c("mm", "md", "dd", "dm"))
 
+pair_labs_expr <- c(
+  mm = expression(italic(M) ~ "x" ~ italic(M)),
+  md = expression(italic(M) ~ "x" ~ italic(D)),
+  dd = expression(italic(D) ~ "x" ~ italic(D)),
+  dm = expression(italic(D) ~ "x" ~ italic(M))
+)
 
 plot.lp <- ggplot(lp2, aes(x = rsucc.mik, y = rsucc.dic)) +
-  geom_density_2d_filled(alpha = 1, contour_var = "count") +
-  #stat_density2d() +
-  scale_color_viridis_d() +
-  scale_fill_viridis_d() + 
-  new_scale_colour() +
-  new_scale_fill() +
-  geom_point(aes(colour = pair, shape = pair, fill = pair), size = 3, alpha = 0.5, color = "white") +  
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "white", size = 0.5) +
-  geom_hline(data = lp2_summary, aes(yintercept = mean_rsucc.dic, color = pair), linetype = "dashed", size = 0.4) +
-  geom_vline(data = lp2_summary, aes(xintercept = mean_rsucc.mik, color = pair), linetype = "dashed", size = 0.4) +
-  geom_segment(data = lp2_summary, aes(x = mean_rsucc.mik, xend = mean_rsucc.mik, y = mean_rsucc.dic - sem_rsucc.dic, yend = mean_rsucc.dic + sem_rsucc.dic, color = pair), size = 1, color = "white") +
-  geom_segment(data = lp2_summary, aes(y = mean_rsucc.dic, yend = mean_rsucc.dic, x = mean_rsucc.mik - sem_rsucc.mik, xend = mean_rsucc.mik + sem_rsucc.mik, color = pair), size = 1, color = "white") +
-  geom_point(data = lp2_summary, aes(x = mean_rsucc.mik, y = mean_rsucc.dic, color = pair, shape = pair, fill = pair), size = 4, color = "white") +
+  geom_point(aes(colour = pair, shape = pair, fill = pair),
+             size = 3, alpha = 0.5, color = "white") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed",
+              color = "grey50", size = 0.5) +
+  geom_segment(data = lp2_summary,
+               aes(x = mean_rsucc.mik, xend = mean_rsucc.mik,
+                   y = mean_rsucc.dic - sem_rsucc.dic,
+                   yend = mean_rsucc.dic + sem_rsucc.dic, color = pair),
+               size = 1) +
+  geom_segment(data = lp2_summary,
+               aes(y = mean_rsucc.dic, yend = mean_rsucc.dic,
+                   x = mean_rsucc.mik - sem_rsucc.mik,
+                   xend = mean_rsucc.mik + sem_rsucc.mik, color = pair),
+               size = 1) +
+  geom_point(data = lp2_summary,
+             aes(x = mean_rsucc.mik, y = mean_rsucc.dic,
+                 color = pair, shape = pair, fill = pair),
+             size = 4, color = "black") +
   facet_wrap(~ stg, ncol = 3) +
-  scale_color_manual(values = c("#BAC94A", "#5D6E1E", "#ABD1DC", "#3B5284")) + 
-  scale_fill_manual(values = c("#BAC94A", "#5D6E1E", "#ABD1DC", "#3B5284")) + 
-  scale_shape_manual(values = c(21,25,24,22)) +
-  scale_x_continuous(labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  scale_y_continuous(labels = c("0", "0.25", "0.5", "0.75", "1")) +
+  scale_color_manual(
+    values = c("#BAC94A", "#5D6E1E", "#ABD1DC", "#3B5284"),
+    labels = pair_labs_expr
+  ) +
+  scale_fill_manual(
+    values = c("#BAC94A", "#5D6E1E", "#ABD1DC", "#3B5284"),
+    labels = pair_labs_expr
+  ) +
+  scale_shape_manual(
+    values = c(21, 25, 24, 22),
+    labels = pair_labs_expr
+  ) +
+  scale_x_continuous(labels = c("0","0.25","0.5","0.75","1")) +
+  scale_y_continuous(labels = c("0","0.25","0.5","0.75","1")) +
   xlab(expression(paste("Survival proportion on ", italic("Mikania")))) +
   ylab(expression(paste("Survival proportion on ", italic("Dicliptera")))) +
   theme_bw() +
-  theme(legend.title = element_blank(),
-        legend.key = element_blank(),
-        legend.background = element_blank(), 
-        legend.text = element_text(face = "italic", size = 10),
-        legend.position = "none",
-        strip.background = element_blank(),
-        panel.border = element_blank(),
-        axis.ticks = element_blank(),
-        #legend.position = "none",
-        legend.key.size = unit(0.5, "cm"),
-        axis.text = element_text(size = 12),
-        axis.title = element_text(size = 16),
-        strip.text = element_text(size = 16),
-        axis.title.x = element_text(margin = margin(t = 10, b = 0)), 
-        axis.title.y = element_text(margin = margin(r = 10, l = 0)))
+  theme(
+    legend.title = element_blank(),
+    legend.key = element_blank(),
+    legend.background = element_blank(),
+    legend.text = element_text(size = 10),
+    legend.key.height = unit(0.8, "cm"),
+    strip.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.ticks = element_blank(),
+    legend.key.size = unit(0.5, "cm"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    strip.text = element_text(size = 16),
+    axis.title.x = element_text(margin = margin(t = 10, b = 0)),
+    axis.title.y = element_text(margin = margin(r = 10, l = 0)),
+    ggside.panel.scale = 0.2,
+    ggside.axis.text = element_blank(),
+    ggside.axis.ticks = element_blank(),
+    ggside.panel.border = element_blank()
+  )
 
 plot.lp
 
-png("Plots/lp_diekei_n2.png", 
-    width = 12, height = 5, units = "in", res = 1200)
+png("figures/diekei_dic_lp.png", 
+    width = 13, height = 5, units = "in", res = 1200)
+plot.lp
+dev.off()
+
+pdf("figures/diekei_dic_lp.pdf", 
+    width = 13, height = 5)
 plot.lp
 dev.off()
 
@@ -367,7 +458,8 @@ asm.plot <- ggplot(cm.plot, aes(fill = cm.fem, y = as.numeric(cm.rate), x = cm.a
   theme(strip.background = element_blank(),
         legend.position = "none",
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1), 
-        strip.text = element_text(face = "italic")) +
+        strip.text = element_text(face = "italic"),
+        panel.grid = element_blank()) +
   geom_text(x = c(0.93, 1.92, 2.94, 1.5, 1.5, 1.5, 0.91, 1.9, 2.91, 1.5, 1.5, 1.5), 
             y = c(0.52, 0.82, 0.855, -1.5, -1.5, -1.5, -0.57, -0.9, -0.83, 1.5, 1.5, 1.5), 
             aes(label = label), data = cm.rate.labs, size = 3.5, hjust = 0, 
@@ -394,15 +486,27 @@ asm.an4 <- asm.an(rasterGrob(dic_md, interpolate=TRUE), xmin=1, xmax=3, ymin=1, 
 
 asm.plot + asm.an1 + asm.an2 + asm.an3 + asm.an4
 
-png("Plots/cm_diekei_n.png", 
+png("figures/diekei_dic_cm.png", 
     width = 3, height = 5, units = "in", res = 1200)
 asm.plot + asm.an1 + asm.an2 + asm.an3 + asm.an4
+dev.off()
+
+cairo_pdf(
+  filename = "figures/diekei_dic_cm.pdf",
+  width = 3,
+  height = 5,
+  family = "Arial Unicode MS"
+)
+
+asm.plot + asm.an1 + asm.an2 + asm.an3 + asm.an4
+
 dev.off()
 
 
 ## SIGHTINGS ####
 
-fid3 <- read.csv('data/2024_EE_vis_fidelity.csv')
+# glm_fid3.csv
+fid3 <- read.csv('data/04_2026_EE_vis_fidelity.csv')
 fid3
 attach(fid3)
 
@@ -411,11 +515,11 @@ fid3$arr <- factor(fid3$arr, levels = c("check", "sep"))
 fid3$host <- factor(fid3$host,levels = c("mik", "dic"))
 fid3$group <- factor(fid3$group, levels = c("mc", "ms", "dc", "ds"))
 
-fid.col <- grDevices::colorRampPalette(c("white", "#ABD1DC", "#BAC94A"))(8)
+
+## SIGHTINGS (5th version)
 
 fid.labs <- c("Separate: M-race", "Separate: D-race", "Checkerboard: M-race", "Checkerboard: D-race")
 names(fid.labs) <- c("ms", "ds", "mc", "dc")
-
 
 fid.plot <- ggplot(data = fid3[fid3$host != "dic",], aes(x = xcor, y = ycor)) + 
   stat_density_2d(aes(fill = ..count..), geom = "raster", contour = FALSE, 
@@ -464,12 +568,10 @@ fid.an4 <- fid.an(rasterGrob(dic_d, interpolate=TRUE), xmin=4, xmax=5, ymin=4.7,
 
 fid.plot + fid.an1 + fid.an2 + fid.an3 + fid.an4
 
-ggsave(filename = "Plots/fid_diekei_n2.png", width = 5, height = 4.8, device='png', dpi=1200)
-
 
 ## DISPERSAL ####
 
-dis2 <- read.csv('data/2024_EE_vis_dispersal.csv')
+dis2 <- read.csv('data/05_2026_EE_vis_dispersal.csv')
 dis2
 attach(dis2)
 
@@ -491,7 +593,8 @@ dis.plot <- ggplot(data = dis2, aes(x = dis, fill = group, color = group)) +
   facet_wrap(~race, labeller = labeller(race = dis.labs)) +
   theme(strip.background = element_blank(), 
         strip.text = element_text(face = "italic"),
-        axis.title.y = element_blank())
+        axis.title.y = element_blank(),
+        panel.grid = element_blank())
 
 dis.plot
 
@@ -512,7 +615,8 @@ dis.an2 <- dis.an(rasterGrob(dic_d, interpolate=TRUE), xmin=4, xmax=6, ymin=0.51
 
 dis.plot + dis.an1 + dis.an2
 
-ggsave(filename = "Plots/dis_diekei_n2.png", width = 4.5, height = 2, device='png', dpi=1200)
+
+
 
 hfid1 <- ggarrange(fid.plot + fid.an1 + fid.an2 + fid.an3 + fid.an4,
                    dis.plot + dis.an1 + dis.an2,
@@ -521,155 +625,8 @@ hfid1 <- ggarrange(fid.plot + fid.an1 + fid.an2 + fid.an3 + fid.an4,
                    ncol = 1, nrow = 2, align = "v")
 
 hfid1
-ggsave(filename = "Plots/hfid_diekei_n.png", width = 5, height = 6, device = 'png', dpi = 1200)
+ggsave(filename = "figures/diekei_dic_hfid.png", width = 5, height = 6, device = 'png', dpi = 1200)
+ggsave(filename = "figures/diekei_dic_hfid.pdf", width = 5, height = 6, device = 'pdf', dpi = 1200)
 
 
-## RI MODEL ####
 
-
-ri_data <- read.csv('data/2024_EE_vis_ri_calculation1.csv')
-ri_data$barrier <- factor(ri_data$barrier, levels = c("seasonal", "habitat", "sexual", "prehatching", "csp", "hybrid inviability"))
-
-compute_ri <- function(df) {
-  # Prepare the dataframe for calculations
-  df <- df %>% arrange(order)
-  
-  # Initialize a matrix to hold e-values
-  e_values <- matrix(0, nrow = nrow(df), ncol = 1001)
-  colnames(e_values) <- sprintf("e%.3f", seq(0, 1, by = 0.001))
-  
-  # Compute the e-values per the specified rules
-  for (i in seq_along(colnames(e_values))) {
-    e_col <- colnames(e_values)[i]
-    e_index <- as.numeric(gsub("e", "", e_col))
-    
-    for (j in 1:nrow(df)) {
-      if (df$barrier[j] == "habitat") {
-        e_values[j, i] <- df$strength[j] * e_index
-      } else {
-        e_values[j, i] <- df$strength[j] * (1 - sum(e_values[1:j, i]))
-      }
-    }
-  }
-  
-  df <- cbind(df, e_values)
-  return(df)
-}
-
-ri_mod1 <- ri_data %>%
-  filter(!is.na(order)) %>% 
-  group_by(species, pair) %>%
-  do(compute_ri(.))
-
-ri_mod2 <- ri_mod1 %>%
-  filter(!is.na(order)) %>% 
-  group_by(species, pair) %>%
-  summarise(across(starts_with("e"), sum, na.rm = TRUE)) %>%
-  mutate(barrier = "total")
-
-ri_mod <- bind_rows(ri_mod1, ri_mod2) %>%
-  filter(species %in% c("Hdk (M x D)", "Hdk (M x L)", "Hvm x Hpt")) %>%
-  pivot_longer(cols = starts_with("e"), names_to = "e_value", values_to = "RI") %>%
-  mutate(e_value = as.numeric(sub("e", "", e_value)))
-
-ri_mod$barrier <- factor(ri_mod$barrier, levels = c("seasonal", "habitat", "sexual", "prehatching", "csp", "hybrid inviability", "total"))
-ri_mod$species <- factor(ri_mod$species, levels = c("Hdk (M x L)", "Hni x Hya", "Hdk (M x D)", "Hvm x Hpt", "Hse x Hpl", "Hvp x Hen"))
-levels(ri_mod$species) <- gsub(" x ", " × ", levels(ri_mod$species))
-
-ri_mod2 <- bind_rows(ri_mod1, ri_mod2) %>%
-  pivot_longer(cols = starts_with("e"), names_to = "e_value", values_to = "RI") %>%
-  mutate(e_value = as.numeric(sub("e", "", e_value)))
-ri_mod2$barrier <- factor(ri_mod2$barrier, levels = c("seasonal", "habitat", "sexual", "prehatching", "csp", "hybrid inviability", "total"))
-ri_mod2$species <- factor(ri_mod2$species, levels = c("Hdk (M x L)", "Hni x Hya", "Hdk (M x D)", "Hvm x Hpt", "Hse x Hpl", "Hen x Hse", "Hen x Hpl", "Hvp x Hse", "Hvp x Hpl", "Hvp x Hen"))
-levels(ri_mod2$species) <- gsub(" x ", " × ", levels(ri_mod2$species))
-
-
-plot.ri.model3 <- ggplot(ri_mod[ri_mod$species == "Hdk (M × D)", ], aes(x = e_value, y = RI, colour = barrier)) +
-  geom_line(size = 1.5, alpha = 0.7, aes(linetype = pair)) +
-  scale_colour_manual(values = c('seasonal' = '#b3de69', 'habitat' = '#8dd3c7', 'sexual' = '#fccde5', 'prehatching' = '#fdb462', 'csp' = '#fb8072', 'hybrid inviability' = '#80b1d3',  'total' = 'black') ) +
-  scale_linetype_manual(values = c("H. diekei D-race" = "solid", "H. diekei M-race" = "dashed")) +
-  scale_y_continuous(breaks = c(-0.25, 0, 0.25, 0.5, 0.75, 1), labels = c("", "0", "0.25", "0.5", "0.75", "1")) +
-  scale_x_continuous(expand = c(0.01, 0.01), trans = "reverse", 
-                     breaks = c(1, 0.75, 0.5, 0.25, 0), labels = c("1", "0.75", "0.5", "0.25", "0")) +
-  xlab('\nEnvironmental stability') +
-  ylab(expression(atop("\n", italic(RI) ~ " absolute contribution"))) +
-  #facet_wrap(~ pair, ncol = 2) +
-  theme_bw() +
-  theme(legend.position = c(0.78, 0.95),
-    #legend.position = "none",
-    legend.title = element_blank(),
-    legend.key = element_blank(),
-    legend.text = element_text(face = "italic", size = 6),
-    legend.key.size = unit(0.01, "cm"),
-    legend.box.spacing = unit(0.5, "cm"),
-    legend.background = element_blank(),
-    strip.background = element_blank(),
-    #legend.text = element_text(size = 8),
-    #legend.key.size = unit(0.3, "cm"),
-    strip.text = element_blank(),
-    axis.text = element_text(size = 12),
-    axis.title = element_text(size = 12), 
-    panel.spacing = unit(1, "lines")) + 
-  guides(
-    colour = "none",
-    fill = "none"
-  )
-
-plot.ri.model3
-png("Plots/model_diekei_ri_model3.png", 
-    width = 3, height = 3, units = "in", res = 1200)
-plot.ri.model3
-dev.off()
-
-
-ri_data2 <- read.csv('data/2024_EE_vis_ri_calculation2.csv')
-ri_data2$barrier <- factor(ri_data2$barrier, levels = c("seasonal", "habitat", "sexual", "prehatching", "csp", "hybrid inviability", "total"))
-levels(ri_data2$species) <- gsub(" x ", " × ", levels(ri_data2$species))
-
-plot.ri2 <- ggplot(ri_data2[ri_data2$species == 'Hdk (M x D)', ], aes(x = strength.1, y = strength.2, colour = barrier)) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black", size = 0.5) +
-  geom_hline(aes(yintercept = 0), linetype = "dashed", color = "black", size = 0.5) +
-  geom_vline(aes(xintercept = 0), linetype = "dashed", color = "black", size = 0.5) +
-  geom_point(aes(colour = barrier, fill = barrier), size = 4, alpha = 1) +  
-  scale_colour_manual(values = c('seasonal' = '#b3de69', 'habitat' = '#8dd3c7', 'sexual' = '#fccde5', 'prehatching' = '#fdb462', 'csp' = '#fb8072', 'hybrid inviability' = '#80b1d3',  'total' = 'black') ) +
-  scale_fill_manual(values = c('seasonal' = '#b3de69', 'habitat' = '#8dd3c7', 'sexual' = '#fccde5', 'prehatching' = '#fdb462', 'csp' = '#fb8072', 'hybrid inviability' = '#80b1d3',  'total' = 'black') ) +
-  scale_x_continuous(labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  scale_y_continuous(labels = c("0", "0.25", "0.5", "0.75", "1")) +
-  #xlab(expression(atop("\n", italic(RI) ~ " strength (x| )"))) +
-  #ylab(expression(atop("\n", italic(RI) ~ " strength ( |x)"))) +
-  xlab(expression(atop("\n", italic(RI) ~ " strength (" * " _ " * "x  " * " )"))) +
-  ylab(expression(atop("\n", italic(RI) ~ " strength (" * "   x" * " _ " * ")"))) +
-  theme_bw() +
-  theme(legend.title = element_blank(),
-        legend.key = element_blank(),
-        legend.background = element_blank(), 
-        legend.text = element_text(size = 6),
-        legend.position = c(0.3, 0.82),
-        legend.key.size = unit(0.01, "cm"),
-        legend.box.spacing = unit(0.5, "cm"),
-        axis.text = element_text(size = 12),
-        axis.title = element_text(size = 12),
-        strip.text = element_text(size = 16)) +
-  guides(
-    colour = guide_legend(override.aes = list(size = 2)),
-    fill = guide_legend(override.aes = list(size = 2))
-  )
-
-plot.ri2
-
-png("Plots/model_diekei_ri2.png", 
-    width = 3, height = 3, units = "in", res = 1200)
-plot.ri2
-dev.off()
-
-
-plot.ri.comb.3 <- ggarrange(plot.ri2, plot.ri.model3,
-                            labels = c("a", "b"),
-                            heights = c(3,3),
-                            widths = c(3,3),
-                            ncol = 1, nrow = 2, align = "v")
-
-plot.ri.comb.3
-ggsave(filename = "Plots/model_diekei_ri_comb3.png", width = 3, height = 6, device = 'png', dpi = 1200)
-ggsave(filename = "Plots/model_diekei_ri_comb3.svg", width = 3, height = 6, device = 'svg', dpi = 1200)
-ggsave(filename = "Plots/model_diekei_ri_comb3.pdf", width = 3, height = 6, device = 'pdf')
