@@ -1,6 +1,6 @@
 ### INTRODUCTION #####
 
-# Welcome. For the description of the project please visit: https://github.com/diekei/2025_ENS_diekei_dicliptera_speciation
+# Welcome. For the description of the project please visit: https://github.com/diekei/2026_EE_diekei_dicliptera_speciation
 # Article is available at: 
 
 
@@ -13,7 +13,7 @@ library(lme4)
 
 ## HOST PREFERENCE ####
 
-host <- read.csv('data/2024_EE_data_host_preference.csv')
+host <- read.csv('data/00_2026_EE_data_host_preference.csv')
 host
 attach(host)
 str(host)
@@ -38,7 +38,7 @@ Anova(glm.host.D, type="II", test = "Wald")
 
 ## NON CHOICE MATING ####
 
-ncm <- read.csv('data/2024_EE_data_nonchoice_mating.csv')
+ncm <- read.csv('data/01_2026_EE_data_nonchoice_mating.csv')
 ncm
 attach(ncm)
 str(ncm)
@@ -73,7 +73,7 @@ summary(pairs(emmeans(glm.mate, ~ pair)), adjust = "holm")
 
 ## EGG ####
 
-egg <- read.csv('data/2024_EE_data_egg.csv', na.strings = "na")
+egg <- read.csv('data/02_2026_EE_data_egg.csv', na.strings = "na")
 egg
 attach(egg)
 str(egg)
@@ -128,64 +128,9 @@ Anova(glm.egd2, type="II", test = "Chisq")
 #summary(glht(glm.egd2,emm(pairwise~pair)), test=adjusted(type="holm"))
 summary(pairs(emmeans(glm.egd2, ~ pair)), adjust = "holm")
 
-## CHOICE MATING ####
-
-cm <- read.csv('data/2024_EE_data_choice_mating.csv', na.strings = "na")
-cm
-attach(cm)
-str(cm)
-
-# -determine which factor explain mating inferences in pres/abs of host
-glm.cm <- glm(cbind(par, hyb) ~ male * host, data = cm, family = binomial)
-summary(glm.cm)
-anova(glm.cm, test = "Chisq")
-Anova(glm.cm, type="II", test = "Wald")
-
-# -determine which factor explain mating inferences in different spatial setting
-glm.field <- glm(cbind(par, hyb) ~ male + arr, data = cm, family = binomial)
-summary(glm.field)
-anova(glm.field, test = "Chisq")
-Anova(glm.field, type="II", test = "Wald")
-
-
-## SIGHTINGS, MIGRATION, AND DISPERSAL ####
-
-fid <- read.csv('data/2024_EE_data_fidelity.csv')
-fid
-attach(fid)
-str(fid)
-
-# -determine which factor explain occurrences of both races
-glm.sig <- glm(cbind(mik, dic) ~ race * (sex + arr), data = fid, family = binomial)
-summary(glm.sig)
-anova(glm.sig)
-Anova(glm.sig, type="II", test = "Wald")
-
-mig <- read.csv('data/2024_EE_data_migration.csv')
-mig
-attach(mig)
-str(mig)
-
-# -determine which factor explain migration frequencies of both races
-glm.mig <- glm(cbind(mik, dic) ~ (race * sex) + arr, data = mig, family = binomial)
-summary(glm.mig)
-anova(glm.mig)
-Anova(glm.mig, type="II", test = "Wald")
-
-dis <- read.csv('data/2024_EE_data_dispersal.csv')
-dis
-attach(dis)
-str(dis)
-
-# -determine which factor explain dispersal of both races
-glm.dis <- glm(dis ~ race * sex * arr, data = dis, family = quasipoisson)
-summary(glm.dis)
-anova(glm.dis, test = "Chisq")
-Anova(glm.dis, type="II", test = "Wald")
-
 ## LARVAL PERFORMANCE ####
 
-lp <- read.csv('data/2024_EE_data_larval_performance.csv')
+lp <- read.csv('data/03_2026_EE_data_larval_performance.csv')
 lp
 attach(lp)
 str(lp)
@@ -214,5 +159,57 @@ summary(glm.lp3)
 anova(glm.lp3, test = "Chisq")
 Anova(glm.lp3, type="II", test = "Wald")
 
+## SIGHTINGS, MIGRATION, AND DISPERSAL ####
 
+fid <- read.csv('data/04_2026_EE_data_fidelity.csv')
+fid
+attach(fid)
+str(fid)
+
+# -determine which factor explain occurrences of both races
+glm.sig <- glm(cbind(mik, dic) ~ race * (sex + arr), data = fid, family = binomial)
+summary(glm.sig)
+anova(glm.sig)
+Anova(glm.sig, type="II", test = "Wald")
+
+dis <- read.csv('data/05a_2026_EE_data_dispersal.csv')
+dis
+attach(dis)
+str(dis)
+
+# -determine which factor explain dispersal of both races
+glm.dis <- glm(dis ~ race * sex * arr, data = dis, family = quasipoisson)
+summary(glm.dis)
+anova(glm.dis, test = "Chisq")
+Anova(glm.dis, type="II", test = "Wald")
+
+mig <- read.csv('data/05b_2026_EE_data_migration.csv')
+mig
+attach(mig)
+str(mig)
+
+# -determine which factor explain migration frequencies of both races
+glm.mig <- glm(cbind(mik, dic) ~ (race * sex) + arr, data = mig, family = binomial)
+summary(glm.mig)
+anova(glm.mig)
+Anova(glm.mig, type="II", test = "Wald")
+
+## CHOICE MATING ####
+
+cm <- read.csv('data/06_2026_EE_data_choice_mating.csv', na.strings = "na")
+cm
+attach(cm)
+str(cm)
+
+# -determine which factor explain mating inferences in pres/abs of host
+glm.cm <- glm(cbind(par, hyb) ~ male * host, data = cm, family = binomial)
+summary(glm.cm)
+anova(glm.cm, test = "Chisq")
+Anova(glm.cm, type="II", test = "Wald")
+
+# -determine which factor explain mating inferences in different spatial setting
+glm.field <- glm(cbind(par, hyb) ~ male + arr, data = cm, family = binomial)
+summary(glm.field)
+anova(glm.field, test = "Chisq")
+Anova(glm.field, type="II", test = "Wald")
 
