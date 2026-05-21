@@ -1,3 +1,9 @@
+### INTRODUCTION #####
+
+# Welcome. For the description of the project please visit: https://github.com/diekei/2026_EE_diekei_dicliptera_speciation
+# Article is available at: 
+
+
 ############################################################
 ## REPRODUCTIVE ISOLATION ESTIMATES 
 ############################################################
