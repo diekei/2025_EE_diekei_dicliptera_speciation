@@ -123,3 +123,6 @@ If you use the data or code from this repository, please cite the associated man
 Maulana, A. et al. The evolution of reproductive isolation beyond a strong first barrier in speciation between micro-allopatric host races of a phytophagous ladybird beetle, *Henosepilachna diekei*. Manuscript submitted to *Ecology and Evolution*.
 
 A full citation will be added after publication.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20767805.svg)](https://doi.org/10.5281/zenodo.20767805)
+
